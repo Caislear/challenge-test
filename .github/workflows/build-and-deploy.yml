@@ -1,0 +1,47 @@
+name: Build and Deploy to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  ACR_NAME: ${{ secrets.ACR_NAME }}             
+  IMAGE_NAME: webapptest                         
+  RESOURCE_GROUP: ${{ secrets.AZURE_RG }}        
+  APP_SERVICE_NAME: ${{ secrets.APP_SERVICE }}   # Web App name
+  TAG: ${{ github.sha }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDS }}
+
+      - name: Docker login to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.ACR_NAME }}.azurecr.io
+
+      - name: Build and push image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+
+      - name: Update App Service with new image
+        run: |
+          az webapp config container set \
+            --name $APP_SERVICE_NAME \
+            --resource-group $RESOURCE_GROUP \
+            --docker-custom-image-name $ACR_NAME.azurecr.io/$IMAGE_NAME:$TAG \
+            --docker-registry-server-url https://$ACR_NAME.azurecr.io
