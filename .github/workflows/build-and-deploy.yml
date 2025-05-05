@@ -45,5 +45,5 @@ jobs:
           az webapp config container set \
             --name $APP_SERVICE_NAME \
             --resource-group $RESOURCE_GROUP \
-            --docker-custom-image-name $ACR_NAME.azurecr.io/$IMAGE_NAME:$TAG \
-            --docker-registry-server-url https://$ACR_NAME.azurecr.io
+            --container-image-name $ACR_NAME.azurecr.io/$IMAGE_NAME:$TAG \
+            --container-registry-url https://$ACR_NAME.azurecr.io
